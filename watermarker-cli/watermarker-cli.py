@@ -8,7 +8,29 @@ def apply_watermark(file_path, args):
 
     # Process an individual file
     image = Watermark(file_path)
-    image.apply_text(args.text, tile=args.tile)
+    kwargs = {}
+    if args.scale:
+      kwargs['scale'] = float(args.scale)
+    if args.align:
+      kwargs['align'] =  args.align
+    if args.valign:
+      kwargs['valign'] = args.valign
+    if args.opacity:
+      kwargs['opacity'] = (int(args.opacity),)
+    if args.color:
+      l_colors = args.color.split(",")
+      if len(l_colors) == 3:
+        if l_colors[0][0] == "(":
+          l_colors[0] = l_colors[0][1:]
+        if l_colors[2][-1] == ")":
+          l_colors[2] = l_colors[2][1:-1]  
+        kwargs['color'] = (int(l_colors[0]), int(l_colors[1]), int(l_colors[2]) )
+    if args.margin:
+      l_margins = args.margin.split("x")
+      if len(l_margins) == 2:
+        kwargs['margin'] = (int(l_margins[0]), int(l_margins[1]))
+        
+    image.apply_text(args.text, tile=args.tile, **kwargs)
     output_file = os.path.join(args.output_dir, os.path.basename(file_path))
 
     print("Saving " + output_file)
@@ -24,6 +46,12 @@ def main():
     parser.add_argument('-t', '--text', required=True, type=str, help='Text watermark to apply.')
     parser.add_argument('-l', '--tile', default=False, action='store_true',
                         help='Tile watermark multiple times across image')
+    parser.add_argument('-s', '--scale', type=float, help='size of the watermark, relative to the height of picture')
+    parser.add_argument('-a', '--align', type=str, help="alignment of the text. center/left/right")
+    parser.add_argument('-v', '--valign', type=str, help="valignment of the text, middle/top/bottom")
+    parser.add_argument('-p', '--opacity', type=int, help="opacity of the text, range: 0-255")
+    parser.add_argument('-c', '--color', type=str, help="color of the text, format:(255,255,255)")
+    parser.add_argument('-m', '--margin', type=str, help="margin of the text, format:25x25")
     parser.add_argument('-o', '--output_dir', default='watermark',
                         help='Directory in which to place output files.  If not specified, the source files will be'
                              'placed in a directory named "watermark".')
